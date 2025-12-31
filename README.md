@@ -1,4 +1,9 @@
 # UIX AI Agent (FREE) open source🚀
+![MIT License](https://img.shields.io/badge/license-MIT-green)
+![AI](https://img.shields.io/badge/AI-Google%20Gemini-blue)
+![React](https://img.shields.io/badge/React-18-61dafb)
+![Tailwind](https://img.shields.io/badge/TailwindCSS-3-38bdf8)
+![Status](https://img.shields.io/badge/status-active-success)
 
 **AI-powered UI & UX Design Assistant**
 
