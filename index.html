@@ -3,74 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Primary SEO -->
-    <title>UIX AI Agent | Intelligent AI UI & UX Design Assistant</title>
-    <meta
-      name="description"
-      content="UIX AI Agent is an AI-powered UI & UX design assistant that generates intelligent app screens, design systems, and workflows for web and mobile using natural language."
-    />
-    <meta
-      name="keywords"
-      content="UIX AI Agent, AI UI design, AI UX design, UI generator, UX assistant, AI design agent, app UI generator, web UI AI, mobile UI AI, React UI generator, Tailwind UI AI, design system generator"
-    />
-    <meta name="author" content="Sweetan Mariyappan - Seeb4Coding" />
-    <meta name="robots" content="index, follow" />
-    <link rel="canonical" href="https://seeb4coding.in/ai/uix-ai-agent/" />
-
-    <!-- Viewport (already exists but recommended final form) -->
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-    />
-
-    <!-- Open Graph (Facebook / LinkedIn / WhatsApp) -->
-    <meta property="og:type" content="website" />
-    <meta
-      property="og:title"
-      content="UIX AI Agent | Intelligent AI UI & UX Design Assistant"
-    />
-    <meta
-      property="og:description"
-      content="Design complete UI & UX flows using AI. Generate screens, layouts, and design systems instantly with UIX AI Agent."
-    />
-    <meta property="og:url" content="https://seeb4coding.in/ai/uix-ai-agent/" />
-    <meta
-      property="og:image"
-      content="https://seeb4coding.in/assets/uix-ai-agent-og.png"
-    />
-    <meta property="og:site_name" content="Seeb4Coding AI Lab" />
-    <meta property="og:locale" content="en_US" />
-
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta
-      name="twitter:title"
-      content="UIX AI Agent | AI UI & UX Design Assistant"
-    />
-    <meta
-      name="twitter:description"
-      content="Generate modern UI & UX designs with AI. Perfect for developers, designers, and startups."
-    />
-    <meta
-      name="twitter:image"
-      content="https://seeb4coding.in/assets/uix-ai-agent-og.png"
-    />
-    <meta name="twitter:creator" content="@seeb4coding" />
-
-    <!-- Application / PWA Friendly -->
-    <meta name="application-name" content="UIX AI Agent" />
-    <meta name="theme-color" content="#020617" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta
-      name="apple-mobile-web-app-status-bar-style"
-      content="black-translucent"
-    />
-
-    <!-- Performance & UX -->
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-    <link rel="dns-prefetch" href="https://esm.sh" />
+    <title>UIX AI Agent | Your intelligent UI & UX design assistant</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -88,7 +21,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
     <!-- React Flow Styles -->
@@ -96,6 +29,7 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/reactflow@11.10.1/dist/style.css"
     />
+
     <style>
       body {
         font-family: "Inter", sans-serif;
@@ -142,6 +76,71 @@
       .react-flow__attribution {
         display: none !important;
       }
+
+      /* Markdown Styles */
+      .markdown-content h1,
+      .markdown-content h2,
+      .markdown-content h3 {
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+        margin-top: 1rem;
+      }
+      .markdown-content h1 {
+        font-size: 1.1rem;
+      }
+      .markdown-content h2 {
+        font-size: 1rem;
+      }
+      .markdown-content h3 {
+        font-size: 0.9rem;
+      }
+      .markdown-content p {
+        margin-bottom: 0.75rem;
+      }
+      .markdown-content p:last-child {
+        margin-bottom: 0;
+      }
+      .markdown-content ul,
+      .markdown-content ol {
+        margin-bottom: 0.75rem;
+        padding-left: 1.25rem;
+      }
+      .markdown-content li {
+        margin-bottom: 0.25rem;
+      }
+      .markdown-content ul {
+        list-style-type: disc;
+      }
+      .markdown-content ol {
+        list-style-type: decimal;
+      }
+      .markdown-content code {
+        font-family: "JetBrains Mono", monospace;
+        background: rgba(0, 0, 0, 0.1);
+        padding: 0.1rem 0.3rem;
+        border-radius: 0.25rem;
+        font-size: 0.85em;
+      }
+      .dark .markdown-content code {
+        background: rgba(255, 255, 255, 0.1);
+      }
+      .markdown-content pre {
+        background: #1e1e24;
+        color: #fff;
+        padding: 1rem;
+        border-radius: 1rem;
+        margin-bottom: 0.75rem;
+        overflow-x: auto;
+      }
+      .markdown-content pre code {
+        background: transparent;
+        padding: 0;
+      }
+      .markdown-content strong {
+        font-weight: 700;
+      }
     </style>
     <script type="importmap">
       {
@@ -151,14 +150,13 @@
           "react/": "https://esm.sh/react@18.3.1/",
           "react": "https://esm.sh/react@18.3.1",
           "reactflow": "https://esm.sh/reactflow@11.10.1?deps=react@18.3.1,react-dom@18.3.1",
-          "jszip": "https://esm.sh/jszip@3.10.1"
+          "jszip": "https://esm.sh/jszip@3.10.1",
+          "marked": "https://esm.sh/marked@12.0.0"
         }
       }
     </script>
-    <link rel="stylesheet" href="/index.css" />
   </head>
   <body class="bg-slate-950 text-slate-50 antialiased overflow-hidden">
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
   </body>
 </html>

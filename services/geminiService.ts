@@ -47,6 +47,7 @@ export type GeneratedUI = {
     to: string;
     label: string;
   }[];
+  assistantMessage: string; // Dynamic message explaining the design choices
 };
 
 /* =========================
@@ -76,13 +77,6 @@ In a real application, the Navigation (Bottom Bar, Sidebar, or Top Header) stays
 - Soft glow highlights.
 - Gradients: bg-gradient-to-r from-[var(--primary)] to-[var(--accent)].
 
-
-# FONT RULE (STRICT)
-- designSystem.font MUST be a single font family name only.
-- Example: "Inter"
-- NEVER include fallbacks like ", sans-serif"
-- Fallbacks are handled by CSS, not designSystem.
-
 # IMAGE RULES (STRICT)
 ❌ DO NOT use via.placeholder.com
 ❌ DO NOT use placehold.it
@@ -98,6 +92,9 @@ Use: https://picsum.photos/seed/ui/{width}/{height}
 
 # ROOT LAYOUT
 - Root container: class="relative w-full min-h-screen bg-[var(--background)] flex flex-col lg:flex-row"
+
+# ASSISTANT MESSAGE
+Include a short, dynamic "assistantMessage" in your JSON response summarizing what you created or changed for the user.
 `;
 
 const ANALYSIS_PROMPT = `
@@ -122,12 +119,10 @@ async function callAI(
   provider: "gemini" | "openrouter" = "gemini",
   referenceParts: any[] = []
 ): Promise<string> {
-  // Logic: Use custom key if present. If not, fallback to default env key and default 'gemini' provider.
   const hasCustomKey = !!apiKey?.trim();
   const effectiveApiKey = hasCustomKey ? apiKey : process.env.API_KEY || "";
   const effectiveProvider = hasCustomKey ? provider : "gemini";
 
-  // If falling back to default key, force a standard Gemini model to avoid provider mismatch errors
   let effectiveModel = modelName;
   if (!hasCustomKey) {
     if (effectiveModel.includes("/") || effectiveModel === "custom") {
@@ -161,7 +156,6 @@ async function callAI(
     const json = await response.json();
     return json.choices[0].message.content;
   } else {
-    // Gemini Provider
     const ai = new GoogleGenAI({ apiKey: effectiveApiKey });
     const contentParts = [{ text: userPrompt }, ...referenceParts];
 
@@ -205,10 +199,6 @@ ${ANALYSIS_PROMPT}
 ${GENERATION_SYSTEM_PROMPT}
 # UI THEME (STRICT)
 The product UI MUST be rendered in ${theme.toUpperCase()} MODE.
-- Do NOT mix light and dark styles
-- Backgrounds, cards, text, borders must match this theme
-- Assume users expect consistency
-
 Theme: ${theme.toUpperCase()}
 Architecture: ${config.architecture.toUpperCase()}.
 # INCREMENTAL UPDATE
@@ -302,8 +292,13 @@ ${config.chatHistory
             required: ["id", "name", "purpose", "markup"],
           },
         },
+        assistantMessage: {
+          type: Type.STRING,
+          description:
+            "Briefly explain what screens or updates were synthesized.",
+        },
       },
-      required: ["overview", "designSystem", "screens"],
+      required: ["overview", "designSystem", "screens", "assistantMessage"],
     },
     modelName,
     config.apiKey,
@@ -331,7 +326,7 @@ export async function generateNewScreen(
   model: string = "gemini-3-flash-preview",
   apiKey?: string,
   provider: "gemini" | "openrouter" = "gemini"
-): Promise<{ name: string; markup: string }> {
+): Promise<{ name: string; markup: string; summary: string }> {
   const systemInstruction = "Elite UI/UX engineer. Return JSON.";
   const userPrompt = `
 Generate ONE new screen for "${projectContext.overview.name}".
@@ -355,8 +350,13 @@ ${GENERATION_SYSTEM_PROMPT}
       properties: {
         name: { type: Type.STRING },
         markup: { type: Type.STRING },
+        summary: {
+          type: Type.STRING,
+          description:
+            "A one sentence summary of what this new screen contains.",
+        },
       },
-      required: ["name", "markup"],
+      required: ["name", "markup", "summary"],
     },
     model,
     apiKey,
@@ -375,7 +375,7 @@ export async function modifyScreen(
   model: string = "gemini-3-flash-preview",
   apiKey?: string,
   provider: "gemini" | "openrouter" = "gemini"
-): Promise<{ name: string; markup: string }> {
+): Promise<{ name: string; markup: string; summary: string }> {
   const systemInstruction = "Refine this screen while maintaining structure.";
   const userPrompt = `
 Refine screen: ${screenName}
@@ -395,8 +395,13 @@ ${currentMarkup}
       properties: {
         name: { type: Type.STRING },
         markup: { type: Type.STRING },
+        summary: {
+          type: Type.STRING,
+          description:
+            "A brief summary of what specific parts of the screen were changed.",
+        },
       },
-      required: ["name", "markup"],
+      required: ["name", "markup", "summary"],
     },
     model,
     apiKey,

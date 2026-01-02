@@ -12,6 +12,7 @@ import ReactFlow, {
   BackgroundVariant,
 } from "reactflow";
 import JSZip from "jszip";
+import { marked } from "marked";
 import {
   generateProductArtifacts,
   refinePrompt,
@@ -107,6 +108,16 @@ const getFullHtml = (markup: string, design: any) => {
   <div id="root">${markup || ""}</div>
 </body>
 </html>`.trim();
+};
+
+const MarkdownContent = ({ content }: { content: string }) => {
+  const html = marked.parse(content);
+  return (
+    <div
+      className="markdown-content text-[13px] leading-relaxed"
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
 };
 
 const ScreenNode = ({ data, selected }: NodeProps) => {
@@ -341,7 +352,6 @@ function Canvas() {
   const [input, setInput] = useState("");
   const [architecture, setArchitecture] = useState<"web" | "app">("web");
   const [appTheme, setAppTheme] = useState<"light" | "dark">("dark");
-  // 🎨 User-selected PRODUCT UI theme (AI intent)
   const [productTheme, setProductTheme] = useState<"light" | "dark">("light");
 
   const [currentBreakpoint, setCurrentBreakpoint] =
@@ -402,7 +412,6 @@ function Canvas() {
   }, [projects]);
 
   useEffect(() => {
-    // Persist theme preference
     localStorage.setItem("stitch_app_theme", appTheme);
   }, [appTheme]);
 
@@ -450,11 +459,9 @@ function Canvas() {
 
   const handleSaveSnapshot = useCallback(() => {
     if (!currentProject) return;
-
     setProjects((prev) => {
       const existingIndex = prev.findIndex((p) => p.id === currentProject.id);
       if (existingIndex >= 0) {
-        // Update existing project in history
         const updatedProjects = [...prev];
         updatedProjects[existingIndex] = {
           ...currentProject,
@@ -465,7 +472,6 @@ function Canvas() {
         return [{ ...currentProject, timestamp: Date.now() }, ...prev];
       }
     });
-
     showSuccess("Workspace saved successfully");
   }, [currentProject]);
 
@@ -476,9 +482,7 @@ function Canvas() {
     const nodeHeight = BREAKPOINT_HEIGHTS[currentBreakpoint];
     const horizontalSpacing = nodeWidth + 150;
     const verticalSpacing = nodeHeight + 150;
-
     const columns = currentBreakpoint === "desktop" ? 2 : 3;
-
     const updatedScreens = currentProject.data.screens.map(
       (s: any, idx: number) => {
         const x = (idx % columns) * horizontalSpacing;
@@ -486,7 +490,6 @@ function Canvas() {
         return { ...s, position: { x, y } };
       }
     );
-
     const updatedProject = {
       ...currentProject,
       data: { ...currentProject.data, screens: updatedScreens },
@@ -495,23 +498,17 @@ function Canvas() {
     setProjects((prev) =>
       prev.map((p) => (p.id === updatedProject.id ? updatedProject : p))
     );
-    requestAnimationFrame(() => {
-      fitView({ padding: 0.2, duration: 800 });
-    });
+    requestAnimationFrame(() => fitView({ padding: 0.2, duration: 800 }));
   }, [currentProject, currentBreakpoint, fitView]);
 
   useEffect(() => {
-    if (currentProject) {
-      triggerAutoLayout();
-    }
+    if (currentProject) triggerAutoLayout();
   }, [currentBreakpoint]);
 
   useEffect(() => {
     if (!didInitialLayout.current && nodes.length > 0 && currentProject) {
       didInitialLayout.current = true;
-      requestAnimationFrame(() => {
-        triggerAutoLayout();
-      });
+      requestAnimationFrame(() => triggerAutoLayout());
     }
   }, [nodes.length, currentProject, triggerAutoLayout]);
 
@@ -521,13 +518,13 @@ function Canvas() {
       (s: any) => s.justCreated
     );
     if (!createdScreen) return;
-    requestAnimationFrame(() => {
+    requestAnimationFrame(() =>
       fitView({
         nodes: [{ id: createdScreen.id }],
         padding: 0.4,
         duration: 700,
-      });
-    });
+      })
+    );
     setTimeout(() => {
       setCurrentProject((curr) => {
         if (!curr) return curr;
@@ -564,7 +561,6 @@ function Canvas() {
     aiLockRef.current = true;
     return true;
   };
-
   const releaseAiLock = () => {
     aiLockRef.current = false;
   };
@@ -587,19 +583,20 @@ function Canvas() {
     });
   }, []);
 
-  const deselectNodes = useCallback(() => {
-    rfSetNodes((nds) => nds.map((n) => ({ ...n, selected: false })));
-  }, [rfSetNodes]);
-
-  const toggleLive = useCallback((id: string) => {
-    setActiveLiveScreens((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }, []);
-
+  const deselectNodes = useCallback(
+    () => rfSetNodes((nds) => nds.map((n) => ({ ...n, selected: false }))),
+    [rfSetNodes]
+  );
+  const toggleLive = useCallback(
+    (id: string) =>
+      setActiveLiveScreens((prev) => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        return next;
+      }),
+    []
+  );
   const deleteScreen = useCallback(
     (id: string) => {
       setCurrentProject((curr) => {
@@ -651,7 +648,9 @@ function Canvas() {
 
       const assistantMsg: ChatMessage = {
         role: "assistant",
-        content: `UIX complete. Your workspace is updated.`,
+        content:
+          result.assistantMessage ||
+          "Architecture synthesized. Workspace updated.",
       };
       const finalMessages = [...updatedMessages, assistantMsg];
       setMessages(finalMessages);
@@ -734,7 +733,7 @@ function Canvas() {
       );
       const assistantMsg: ChatMessage = {
         role: "assistant",
-        content: `Refined the screen based on your feedback.`,
+        content: result.summary || "Refined the screen based on your feedback.",
       };
       const finalMessages = [...updatedMessages, assistantMsg];
       setMessages(finalMessages);
@@ -807,7 +806,7 @@ function Canvas() {
       pushToHistory(currentProject);
       const assistantMsg: ChatMessage = {
         role: "assistant",
-        content: `Added the new screen.`,
+        content: result.summary || "Added the new screen.",
       };
       const finalMessages = [...updatedMessages, assistantMsg];
       setMessages(finalMessages);
@@ -837,7 +836,6 @@ function Canvas() {
   // --- Node Syncing ---
   useEffect(() => {
     if (currentProject?.data?.screens) {
-      const nodeWidth = BREAKPOINT_WIDTHS[currentBreakpoint];
       const newNodes = currentProject.data.screens.map((screen: any) => {
         const selectedNodeIds = new Set(
           getNodes()
@@ -845,7 +843,6 @@ function Canvas() {
             .map((n) => n.id)
         );
         const isSelected = selectedNodeIds.has(screen.id);
-
         return {
           id: screen.id,
           type: "screen",
@@ -858,7 +855,7 @@ function Canvas() {
             modifyInput: isSelected ? modifyInput : "",
             isModifying,
             onModifyInputChange: setModifyInput,
-            onHandleModify: handleModify,
+            onHandleModify: handleHandleModify,
             onDeselect: deselectNodes,
             onToggleLive: toggleLive,
             onDelete: deleteScreen,
@@ -887,6 +884,8 @@ function Canvas() {
     rfSetNodes,
   ]);
 
+  const handleHandleModify = useCallback(() => handleModify(), [handleModify]);
+
   const handleFileReferenceChange = async (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -906,9 +905,8 @@ function Canvas() {
     e.target.value = "";
   };
 
-  const removeReference = (index: number) => {
+  const removeReference = (index: number) =>
     setReferenceAssets((prev) => prev.filter((_, i) => i !== index));
-  };
 
   const handleImportHistory = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -916,16 +914,13 @@ function Canvas() {
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        const content = event.target?.result as string;
-        const importedProjects = JSON.parse(content);
+        const importedProjects = JSON.parse(event.target?.result as string);
         if (Array.isArray(importedProjects)) {
           setProjects((prev) => {
             const idSet = new Set(prev.map((p) => p.id));
             const merged = [...prev];
             importedProjects.forEach((p: any) => {
-              if (!idSet.has(p.id)) {
-                merged.push(p);
-              }
+              if (!idSet.has(p.id)) merged.push(p);
             });
             return merged;
           });
@@ -958,12 +953,12 @@ function Canvas() {
   const handleExportZip = async () => {
     if (!currentProject) return;
     const zip = new JSZip();
-    currentProject.data.screens.forEach((s: any) => {
+    currentProject.data.screens.forEach((s: any) =>
       zip.file(
         `${s.name.replace(/\s+/g, "_")}.html`,
         getFullHtml(s.markup, currentProject.data.designSystem)
-      );
-    });
+      )
+    );
     const blob = await zip.generateAsync({ type: "blob" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -997,7 +992,6 @@ function Canvas() {
         .toast-error { animation: shake 0.2s ease-in-out 0s 2; }
       `}</style>
 
-      {/* Dynamic Toast Notifications */}
       {notification && (
         <div
           className={`fixed top-24 left-1/2 -translate-x-1/2 z-[3000] px-6 py-4 rounded-3xl shadow-2xl font-black text-xs uppercase tracking-widest animate-in fade-in slide-in-from-top-6 flex items-center gap-3 border ${
@@ -1039,7 +1033,6 @@ function Canvas() {
         </div>
       )}
 
-      {/* Settings Modal */}
       {isSettingsOpen && (
         <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 modal-backdrop animate-in fade-in">
           <div className="bg-[#18181b] w-full max-w-[420px] rounded-3xl shadow-2xl border border-slate-800 flex flex-col overflow-hidden animate-in zoom-in-95">
@@ -1123,20 +1116,15 @@ function Canvas() {
         </div>
       )}
 
-      {/* Sidebar Interface */}
       <aside className="w-[440px] border-r border-slate-100 dark:border-slate-800 flex flex-col bg-white dark:bg-slate-900 z-50 shrink-0 shadow-xl overflow-hidden">
         <header className="p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg">
-                <svg
-                  className="w-5 h-5 text-white"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path strokeWidth={3} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
+              <div className="w-8 h-8 items-center justify-center shadow-lg">
+                <img
+                  src="https://seeb4coding.in/assets/images/UIX_logo.png"
+                  alt="logo"
+                />
               </div>
               <h1 className="text-xl font-black uppercase text-indigo-600">
                 UIX Agent
@@ -1338,7 +1326,7 @@ function Canvas() {
                       : "bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-tl-none border border-slate-100 dark:border-slate-700 shadow-sm"
                   }`}
                 >
-                  {msg.content}
+                  <MarkdownContent content={msg.content} />
                 </div>
                 <span className="text-[9px] font-black uppercase text-slate-400 mt-2 px-2 tracking-widest">
                   {msg.role === "user" ? "You" : "UIX Agent"}
@@ -1347,52 +1335,6 @@ function Canvas() {
             ))}
             <div ref={chatEndRef} />
           </div>
-
-          {referenceAssets.length > 0 && (
-            <div className="px-6 py-3 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
-              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-                {referenceAssets.map((asset, i) => (
-                  <div
-                    key={i}
-                    className="relative shrink-0 w-16 h-16 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700"
-                  >
-                    {asset.type === "image" ? (
-                      <img
-                        src={asset.data}
-                        className="w-full h-full object-cover"
-                        alt="ref"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-slate-50 dark:bg-slate-800">
-                        <svg
-                          className="w-6 h-6 text-indigo-500"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                    )}
-                    <button
-                      onClick={() => removeReference(i)}
-                      className="absolute top-1 right-1 bg-rose-500 text-white rounded-full p-0.5 shadow-lg"
-                    >
-                      <svg
-                        className="w-3 h-3"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={4}
-                      >
-                        <path d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col gap-4">
             <div className="flex items-center justify-between">
@@ -1475,7 +1417,6 @@ function Canvas() {
                     onChange={handleFileReferenceChange}
                   />
                 </label>
-
                 <div className="flex-1 relative group">
                   <textarea
                     value={input}
@@ -1628,7 +1569,6 @@ function Canvas() {
             </div>
           </div>
         </nav>
-
         <div className="flex-1 relative">
           <ReactFlow
             nodes={nodes}
@@ -1647,7 +1587,6 @@ function Canvas() {
               size={1}
               color={appTheme === "dark" ? "#334155" : "#cbd5e1"}
             />
-
             {isAddingScreen && (
               <Panel position="top-center" className="mt-4">
                 <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-[2rem] shadow-2xl p-6 w-[400px] animate-in slide-in-from-top-4 duration-300">
@@ -1681,7 +1620,6 @@ function Canvas() {
                 </div>
               </Panel>
             )}
-
             <Panel position="bottom-center" className="mb-10">
               <div className="flex items-center gap-1.5 p-1.5 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-[1.25rem] shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-md">
                 <button
@@ -1765,7 +1703,6 @@ function Canvas() {
                 </button>
               </div>
             </Panel>
-
             {isGenerating && (
               <Panel
                 position="top-center"
@@ -1783,7 +1720,6 @@ function Canvas() {
         </div>
       </main>
 
-      {/* Workspace History Modal */}
       {isHistoryOpen && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-8 modal-backdrop animate-in fade-in">
           <div className="bg-white dark:bg-slate-800 w-full max-w-2xl max-h-[80vh] rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 border border-slate-200 dark:border-slate-700">
@@ -1856,7 +1792,6 @@ function Canvas() {
 
 export default function App() {
   const [isMobile, setIsMobile] = useState(false);
-
   useEffect(() => {
     if (typeof window !== "undefined") {
       const checkMobile = () => {
@@ -1867,7 +1802,6 @@ export default function App() {
       return () => window.removeEventListener("resize", checkMobile);
     }
   }, []);
-
   if (isMobile) {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-950 text-white p-8 text-center">
@@ -1899,7 +1833,6 @@ export default function App() {
       </div>
     );
   }
-
   return (
     <ReactFlowProvider>
       <Canvas />
